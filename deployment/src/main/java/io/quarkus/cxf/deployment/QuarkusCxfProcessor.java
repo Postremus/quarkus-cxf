@@ -574,7 +574,6 @@ class QuarkusCxfProcessor {
                 continue;
             }
 
-            annotation.value("targetNamespace");
             ClassInfo wsClassInfo = annotation.target().asClass();
             reflectiveClass
                     .produce(new ReflectiveClassBuildItem(true, true, wsClassInfo.name().toString()));
@@ -1066,6 +1065,7 @@ class QuarkusCxfProcessor {
                 "org.apache.cxf.staxutils.W3CDOMStreamWriter",
                 "javax.xml.stream.XMLStreamReader",
                 "javax.xml.stream.XMLStreamWriter",
+                "org.apache.cxf.common.jaxb.JAXBContextCache",
                 "org.apache.cxf.common.jaxb.SchemaCollectionContextProxy",
                 "com.ctc.wstx.sax.WstxSAXParserFactory",
                 "com.ibm.wsdl.BindingFaultImpl",
@@ -1202,9 +1202,7 @@ class QuarkusCxfProcessor {
                 "org.apache.cxf.transports.http.configuration.HTTPServerPolicy",
                 "org.apache.cxf.transports.http.configuration.ObjectFactory",
                 "org.apache.cxf.ws.addressing.wsdl.AttributedQNameType",
-                "org.apache.cxf.ws.addressing.wsdl.AttributedQNameType",
                 "org.apache.cxf.ws.addressing.wsdl.ObjectFactory",
-                "org.apache.cxf.ws.addressing.wsdl.ServiceNameType",
                 "org.apache.cxf.ws.addressing.wsdl.ServiceNameType",
                 "org.apache.cxf.wsdl.http.AddressType",
                 "org.apache.cxf.wsdl.http.ObjectFactory",
