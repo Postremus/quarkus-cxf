@@ -23,6 +23,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import javax.xml.ws.soap.SOAPBinding;
 
 import io.quarkus.arc.deployment.BeanDefiningAnnotationBuildItem;
+import io.quarkus.gizmo.AnnotationCreator;
 import io.quarkus.runtime.util.HashUtil;
 import org.apache.cxf.common.jaxb.JAXBUtils;
 import org.apache.cxf.common.util.StringUtils;
@@ -128,6 +129,7 @@ class QuarkusCxfProcessor {
     private static final String RESPONSE_CLASS_POSTFIX = "Response";
 
     //TODO check if better to reuse the cxf parsing system to generate only asm from their.
+
     private MethodDescriptor createWrapper(boolean isRequest, String operationName, String namespace, String resultName,
             String resultType,
             List<WrapperParameter> params, ClassOutput classOutput, String pkg, String className,
@@ -143,11 +145,19 @@ class QuarkusCxfProcessor {
                     DotName.createSimple(XmlRootElement.class.getName()), null,
                     new AnnotationValue[]{AnnotationValue.createStringValue("name", operationName+ (isRequest ? "" : RESPONSE_CLASS_POSTFIX)),
                             AnnotationValue.createStringValue("namespace", namespace)}));
-            classCreator.addAnnotation(AnnotationInstance.create(
+            //TODO remove this attribute because gizmo do not support enum
+            // wait release of gizmo with https://github.com/quarkusio/gizmo/pull/59
+            // to enable it back
+            /*classCreator.addAnnotation(AnnotationInstance.create(
                     DotName.createSimple(XmlAccessorType.class.getName()), null,
-                    new AnnotationValue[]{
-                            AnnotationValue.createEnumValue("value",
-                                    DotName.createSimple(XmlAccessType.class.getName()), "FIELD")}));
+                    new AnnotationValue[]{AnnotationValue.createEnumValue("value",
+                            DotName.createSimple( "javax.xml.bind.annotation.XmlAccessType"),
+                                    "FIELD")}));
+            */
+            //solution 2 do not work either currenlty bu fix on gizmo master with PR 58
+            //AnnotationCreator ac = classCreator.addAnnotation(XmlAccessorType.class.getName());
+            //ac.addValue("value", javax.xml.bind.annotation.XmlAccessType.FIELD);
+
             //if (!anonymous)
             classCreator.addAnnotation(AnnotationInstance.create(
                     DotName.createSimple(XmlType.class.getName()), null,
@@ -225,6 +235,9 @@ class QuarkusCxfProcessor {
                 .map(DotName::createSimple)
                 .collect(Collectors.toList());
         boolean annotationAdded = false;
+        //wait fix of XmlAccessorType
+        // before this fix witch annotation to getter
+        /*
         for (AnnotationInstance ann : paramAnnotations) {
             if (jaxbAnnotationDotNames.contains(ann.name())) {
                 // copy jaxb annotation from param to
@@ -240,9 +253,28 @@ class QuarkusCxfProcessor {
             field.addAnnotation(AnnotationInstance.create(DotName.createSimple(XmlElement.class.getName()),
                     null, annotationValues));
         }
+
+         */
         try (MethodCreator getter = classCreator.getMethodCreator(
                 JAXBUtils.nameToIdentifier(webParamName, JAXBUtils.IdentifierType.GETTER),
                 identifier)) {
+                // start quick fix : switch annotation from field to getter
+                for (AnnotationInstance ann : paramAnnotations) {
+                    if (jaxbAnnotationDotNames.contains(ann.name())) {
+                        // copy jaxb annotation from param to
+                        getter.addAnnotation(AnnotationInstance.create(ann.name(), null, ann.values()));
+                        annotationAdded = true;
+                    }
+                }
+                if (!annotationAdded) {
+                    List<AnnotationValue> annotationValues = new ArrayList<>();
+                    annotationValues.add(AnnotationValue.createStringValue("name", webParamName));
+                    //TODO handle a config for factory.isWrapperPartQualified, factory.isWrapperPartNillable, factory.getWrapperPartMinOccurs
+                    // and add annotation value here for it
+                    getter.addAnnotation(AnnotationInstance.create(DotName.createSimple(XmlElement.class.getName()),
+                            null, annotationValues));
+                }
+                // end quick fix
             getter.setModifiers(Modifier.PUBLIC);
             getter.returnValue(getter.readInstanceField(field.getFieldDescriptor(), getter.getThis()));
             getters.add(getter.getMethodDescriptor());

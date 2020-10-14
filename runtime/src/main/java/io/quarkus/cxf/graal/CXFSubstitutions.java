@@ -128,7 +128,7 @@ final class Target_org_apache_cxf_jaxws_WrapperClassGenerator {
             OperationInfo op,
             Method method,
             boolean isRequest) {
-        LOG.info("wrapper class substitution : " + op.getName());
+        LOG.info("wrapper class substitution : " + op.getName()+ (isRequest?"":"Response"));
         QName wrapperElement = messageInfo.getName();
         //TODO handle it when config for anonymous is handle
         //boolean anonymous = factory.getAnonymousWrapperTypes();
