@@ -261,7 +261,7 @@ class QuarkusCxfProcessor {
                 // start quick fix : switch annotation from field to getter
                 for (AnnotationInstance ann : paramAnnotations) {
                     if (jaxbAnnotationDotNames.contains(ann.name())) {
-                        // copy jaxb annotation from param to
+                        // copy jaxb annotation from param to getter
                         getter.addAnnotation(AnnotationInstance.create(ann.name(), null, ann.values()));
                         annotationAdded = true;
                     }
