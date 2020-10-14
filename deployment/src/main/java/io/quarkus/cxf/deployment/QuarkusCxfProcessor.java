@@ -964,6 +964,7 @@ class QuarkusCxfProcessor {
         proxies.produce(new NativeImageProxyDefinitionBuildItem("org.apache.cxf.binding.soap.wsdl.extensions.SoapFault"));
         proxies.produce(new NativeImageProxyDefinitionBuildItem("org.apache.cxf.binding.soap.wsdl.extensions.SoapOperation"));
         proxies.produce(new NativeImageProxyDefinitionBuildItem("com.sun.xml.bind.marshaller.CharacterEscapeHandler"));
+        proxies.produce(new NativeImageProxyDefinitionBuildItem("com.sun.xml.bind.v2.schemagen.xmlschema.Schema"));
 
     }
 
