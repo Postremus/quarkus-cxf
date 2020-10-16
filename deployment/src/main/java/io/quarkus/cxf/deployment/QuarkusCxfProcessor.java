@@ -1056,7 +1056,7 @@ class QuarkusCxfProcessor {
                 "com.sun.xml.bind.marshaller.CharacterEscapeHandler",
                 "com.sun.xml.internal.bind.marshaller.CharacterEscapeHandler",
                 "com.sun.xml.internal.bind.retainReferenceToInfo"));
-        reflectiveItems.produce(new ReflectiveClassBuildItem(false, false,
+        reflectiveItems.produce(new ReflectiveClassBuildItem(true, true,
                 //manually added
                 "org.apache.cxf.wsdl.interceptors.BareInInterceptor",
                 "com.sun.msv.reader.GrammarReaderController",
