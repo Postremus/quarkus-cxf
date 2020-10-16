@@ -295,10 +295,12 @@ class QuarkusCxfProcessor {
         String[] strs = pkg.split("\\.");
         StringBuilder b = new StringBuilder("http://");
         for (int i = strs.length - 1; i >= 0; i--) {
+            if (i != strs.length - 1) {
+                b.append(".");
+            }
             b.append(strs[i]);
-            b.append("/");
         }
-
+        b.append("/");
         return b.toString();
     }
 
@@ -590,12 +592,12 @@ class QuarkusCxfProcessor {
             if (idx != -1 && idx < pkg.length() - 1) {
                 pkg = pkg.substring(0, idx);
             }
+            AnnotationValue namespaceVal = annotation.value("targetNamespace");
+            String namespace = namespaceVal != null ? namespaceVal.asString() : getNamespaceFromPackage(pkg);
 
             pkg = pkg + ".jaxws_asm";
             //TODO config for boolean anonymous = factory.getAnonymousWrapperTypes();
             //if (getAnonymousWrapperTypes) pkg += "_an";
-            AnnotationValue namespaceVal = annotation.value("targetNamespace");
-            String namespace = namespaceVal != null ? namespaceVal.asString() : getNamespaceFromPackage(pkg);
 
             ClassOutput classOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
             //https://github.com/apache/cxf/blob/master/rt/frontend/jaxws/src/main/java/org/apache/cxf/jaxws/WrapperClassGenerator.java#L234
@@ -867,7 +869,7 @@ class QuarkusCxfProcessor {
         for (ClassInfo subclass : index.getAllKnownImplementors(DATABINDING)) {
             reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, subclass.name().toString()));
         }
-
+        //TODO parse XmlSeeAlso annotation to add reflection on class too
     }
     @BuildStep
     BeanDefiningAnnotationBuildItem additionalBeanDefiningAnnotation() {
