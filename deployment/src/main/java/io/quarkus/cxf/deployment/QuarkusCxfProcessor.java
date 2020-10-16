@@ -1014,6 +1014,7 @@ class QuarkusCxfProcessor {
     @BuildStep
     public void registerReflectionItems(BuildProducer<ReflectiveClassBuildItem> reflectiveItems) {
         //TODO load all bus-extensions.txt file and parse it to generate the reflective class.
+        //TODO load all handler from https://github.com/apache/cxf/tree/master/rt/frontend/jaxws/src/main/java/org/apache/cxf/jaxws/handler/types
         reflectiveItems.produce(new ReflectiveClassBuildItem(true, true,
                 "io.quarkus.cxf.QuarkusJAXBBeanInfo",
                 "com.sun.tools.internal.xjc.api.XJC",
@@ -1048,6 +1049,7 @@ class QuarkusCxfProcessor {
                 "com.sun.xml.internal.bind.subclassReplacements",
                 "com.sun.xml.internal.bind.defaultNamespaceRemap",
                 "com.sun.xml.internal.bind.c14n",
+                "org.apache.cxf.common.jaxb.SchemaCollectionContextProxy",
                 "com.sun.xml.internal.bind.v2.model.annotation.RuntimeAnnotationReader",
                 "com.sun.xml.internal.bind.XmlAccessorFactory",
                 "com.sun.xml.internal.bind.treatEverythingNillable",
@@ -1094,7 +1096,6 @@ class QuarkusCxfProcessor {
                 "javax.xml.stream.XMLStreamReader",
                 "javax.xml.stream.XMLStreamWriter",
                 "org.apache.cxf.common.jaxb.JAXBContextCache",
-                "org.apache.cxf.common.jaxb.SchemaCollectionContextProxy",
                 "com.ctc.wstx.sax.WstxSAXParserFactory",
                 "com.ibm.wsdl.BindingFaultImpl",
                 "com.ibm.wsdl.BindingImpl",
@@ -1205,7 +1206,6 @@ class QuarkusCxfProcessor {
                 "org.apache.cxf.bus.CXFBusFactory",
                 "org.apache.cxf.bus.managers.BindingFactoryManagerImpl",
                 "org.apache.cxf.common.jaxb.NamespaceMapper",
-                "org.apache.cxf.common.jaxb.SchemaCollectionContextProxy",
                 "org.apache.cxf.interceptor.Fault",
                 "org.apache.cxf.jaxb.DatatypeFactory",
                 "org.apache.cxf.jaxb.JAXBDataBinding",
@@ -1329,6 +1329,7 @@ class QuarkusCxfProcessor {
 
     @BuildStep
     NativeImageResourceBuildItem nativeImageResourceBuildItem() {
+        //TODO add @HandlerChain (file) and parse it to add class loading
         return new NativeImageResourceBuildItem("com/sun/xml/fastinfoset/resources/ResourceBundle.properties",
                 "META-INF/cxf/bus-extensions.txt",
                 "META-INF/cxf/cxf.xml",
