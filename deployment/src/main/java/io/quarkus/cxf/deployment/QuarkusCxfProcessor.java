@@ -1045,6 +1045,8 @@ class QuarkusCxfProcessor {
                 "com.sun.xml.bind.v2.runtime.MarshallerImpl",
                 "com.sun.xml.messaging.saaj.soap.SOAPDocumentImpl",
                 "com.sun.xml.internal.bind.v2.ContextFactory",
+                "javax.wsdl.Types",
+                "javax.wsdl.extensions.mime.MIMEPart",
                 "com.sun.xml.bind.v2.ContextFactory",
                 "com.sun.xml.bind.v2.runtime.BridgeContextImpl",
                 "com.sun.xml.bind.v2.runtime.JAXBContextImpl",
@@ -1064,6 +1066,7 @@ class QuarkusCxfProcessor {
                 "com.sun.xml.internal.bind.treatEverythingNillable",
                 "com.sun.xml.bind.marshaller.CharacterEscapeHandler",
                 "com.sun.xml.internal.bind.marshaller.CharacterEscapeHandler",
+                "com.sun.org.apache.xerces.internal.dom.ElementNSImpl",
                 "com.sun.xml.internal.bind.retainReferenceToInfo"));
         reflectiveItems.produce(new ReflectiveClassBuildItem(false, false,
                 //manually added
