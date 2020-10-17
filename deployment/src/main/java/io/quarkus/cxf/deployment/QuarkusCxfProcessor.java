@@ -1067,6 +1067,7 @@ class QuarkusCxfProcessor {
                 "com.sun.xml.bind.marshaller.CharacterEscapeHandler",
                 "com.sun.xml.internal.bind.marshaller.CharacterEscapeHandler",
                 "com.sun.org.apache.xerces.internal.dom.ElementNSImpl",
+                "sun.security.ssl.SSLLogger",
                 "com.sun.xml.internal.bind.retainReferenceToInfo"));
         reflectiveItems.produce(new ReflectiveClassBuildItem(false, false,
                 //manually added
@@ -1350,6 +1351,7 @@ class QuarkusCxfProcessor {
                 "META-INF/blueprint.handlers",
                 "META-INF/spring.handlers",
                 "META-INF/spring.schemas",
+                "META-INF/jax-ws-catalog.xml",
                 "OSGI-INF/metatype/workqueue.xml",
                 "schemas/core.xsd",
                 "schemas/blueprint/core.xsd",
