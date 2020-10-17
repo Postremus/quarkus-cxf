@@ -1,12 +1,14 @@
 package io.quarkus.cxf.deployment;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -22,8 +24,9 @@ import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import javax.xml.ws.soap.SOAPBinding;
 
-import io.quarkus.arc.deployment.BeanDefiningAnnotationBuildItem;
-import io.quarkus.gizmo.AnnotationCreator;
+import io.quarkus.gizmo.DescriptorUtils;
+import io.quarkus.gizmo.Gizmo;
+import io.quarkus.gizmo.GizmoClassVisitor;
 import io.quarkus.runtime.util.HashUtil;
 import org.apache.cxf.common.jaxb.JAXBUtils;
 import org.apache.cxf.common.util.StringUtils;
@@ -71,6 +74,9 @@ import io.quarkus.undertow.deployment.FilterBuildItem;
 import io.quarkus.undertow.deployment.ServletBuildItem;
 import io.quarkus.undertow.deployment.ServletInitParamBuildItem;
 import io.quarkus.vertx.http.deployment.RouteBuildItem;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
 
 class QuarkusCxfProcessor {
 
@@ -154,9 +160,6 @@ class QuarkusCxfProcessor {
                             DotName.createSimple( "javax.xml.bind.annotation.XmlAccessType"),
                                     "FIELD")}));
             */
-            //solution 2 do not work either currenlty bu fix on gizmo master with PR 58
-            //AnnotationCreator ac = classCreator.addAnnotation(XmlAccessorType.class.getName());
-            //ac.addValue("value", javax.xml.bind.annotation.XmlAccessType.FIELD);
 
             //if (!anonymous)
             classCreator.addAnnotation(AnnotationInstance.create(
@@ -598,110 +601,116 @@ class QuarkusCxfProcessor {
             pkg = pkg + ".jaxws_asm";
             //TODO config for boolean anonymous = factory.getAnonymousWrapperTypes();
             //if (getAnonymousWrapperTypes) pkg += "_an";
-
+            //currently package-info is not supported by gizmo so done the whole generation
+            String packageName = pkg + ".package-info";
+            String packagefileName = packageName.replace('.', '/');
             ClassOutput classOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
             //https://github.com/apache/cxf/blob/master/rt/frontend/jaxws/src/main/java/org/apache/cxf/jaxws/WrapperClassGenerator.java#L234
-            try (ClassCreator PackageInfoCreator = ClassCreator.builder().classOutput(classOutput)
-                    .className(pkg + ".package-info")
-                    .build()) {
-                List<AnnotationValue> annotationValues = new ArrayList<>();
-                annotationValues.add(AnnotationValue.createStringValue("namespace", namespace));
-                annotationValues.add(AnnotationValue.createEnumValue("elementFormDefault",
-                        DotName.createSimple("javax.xml.bind.annotation.XmlNsForm"),
-                        (namespaceVal != null) ? "QUALIFIED" : "UNQUALIFIED"));
-                PackageInfoCreator.addAnnotation(AnnotationInstance.create(DotName.createSimple(XmlSchema.class.getName()),
-                        null, annotationValues));
-                // TODO find package annotation with yandex (AnnotationTarget.Kind.package do not exists...
-                // then forward value and type of XmlJavaTypeAdapter
-                //            PackageInfoCreator.addAnnotation(AnnotationInstance.create(DotName.createSimple(XmlJavaTypeAdapters.class.getName()),
-                //                    null, annotationValues));
-                //            PackageInfoCreator.addAnnotation(AnnotationInstance.create(DotName.createSimple(XmlJavaTypeAdapter.class.getName()),
-                //                    null, annotationValues));
+            ClassWriter file = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+            final GizmoClassVisitor cv = new GizmoClassVisitor(Gizmo.ASM_API_VERSION, file, classOutput.getSourceWriter(packagefileName));
+            cv.visit(Opcodes.V1_5, Opcodes.ACC_ABSTRACT + Opcodes.ACC_INTERFACE, packagefileName, null,
+                    "java/lang/Object", null);
 
-                //TODO get SOAPBINDING_ANNOTATION to get iRPC
-                List<MethodDescriptor> setters = new ArrayList<>();
-                List<MethodDescriptor> getters = new ArrayList<>();
-                for (MethodInfo mi : wsClassInfo.methods()) {
-                    for (Type exceptionType : mi.exceptions()) {
-                        String exceptionName = exceptionType.name().withoutPackagePrefix() + "_Exception";
-                        if (exceptionType.annotation(WEBFAULT_ANNOTATION) != null) {
-                            exceptionName = exceptionType.annotation(WEBFAULT_ANNOTATION).value("name").asString();
+            AnnotationVisitor av = cv.visitAnnotation("Ljavax/xml/bind/annotation/XmlSchema;",true);
+            av.visit("namespace", namespace);
+            av.visitEnum("elementFormDefault", "Ljavax/xml/bind/annotation/XmlNsForm;", (namespaceVal != null) ? "QUALIFIED" : "UNQUALIFIED");
+            av.visitEnd();
 
-                        }
-                        createException(classOutput, exceptionName, exceptionType.name());
+            // TODO find package annotation with yandex (AnnotationTarget.Kind.package do not exists...
+            // then forward value and type of XmlJavaTypeAdapter
+            //            PackageInfoCreator.addAnnotation(AnnotationInstance.create(DotName.createSimple(XmlJavaTypeAdapters.class.getName()),
+            //                    null, annotationValues));
+            //            PackageInfoCreator.addAnnotation(AnnotationInstance.create(DotName.createSimple(XmlJavaTypeAdapter.class.getName()),
+            //                    null, annotationValues));
+
+            cv.visitEnd();
+            classOutput.write(packagefileName, file.toByteArray());
+
+            //TODO get SOAPBINDING_ANNOTATION to get isRPC
+            //@SOAPBinding(style=Style.RPC, use=Use.LITERAL, parameterStyle=ParameterStyle.BARE)
+            List<MethodDescriptor> setters = new ArrayList<>();
+            List<MethodDescriptor> getters = new ArrayList<>();
+            for (MethodInfo mi : wsClassInfo.methods()) {
+                for (Type exceptionType : mi.exceptions()) {
+                    String exceptionName = exceptionType.name().withoutPackagePrefix() + "_Exception";
+                    if (exceptionType.annotation(WEBFAULT_ANNOTATION) != null) {
+                        exceptionName = exceptionType.annotation(WEBFAULT_ANNOTATION).value("name").asString();
+
                     }
-                    String className = StringUtils.capitalize(mi.name());
-                    String operationName = mi.name();
-                    AnnotationInstance webMethodAnnotation = mi.annotation(WEBMETHOD_ANNOTATION);
-                    if (webMethodAnnotation != null) {
-                        AnnotationValue nameVal = webMethodAnnotation.value("operationName");
-                        if (nameVal != null) {
-                            operationName = nameVal.asString();
-                        }
-                    }
-
-                    AnnotationInstance webResultAnnotation = mi.annotation(WEBRESULT_ANNOTATION);
-                    String resultName = "return";
-                    if (webResultAnnotation != null) {
-                        AnnotationValue resultNameVal = webResultAnnotation.value("name");
-                        if (resultNameVal != null) {
-                            resultName = resultNameVal.asString();
-                        }
-                    }
-                    List<WrapperParameter> wrapperParams = new ArrayList<WrapperParameter>();
-                    for (int i = 0; i < mi.parameters().size(); i++) {
-                        Type paramType = mi.parameters().get(i);
-                        String paramName = mi.parameterName(i);
-                        List<AnnotationInstance> paramAnnotations = new ArrayList<>();
-                        for (AnnotationInstance methodAnnotation : mi.annotations()) {
-                            if (methodAnnotation.target().kind() != AnnotationTarget.Kind.METHOD_PARAMETER)
-                                continue;
-                            MethodParameterInfo paramInfo = methodAnnotation.target().asMethodParameter();
-                            if (paramInfo != null && paramName.equals(paramInfo.name())) {
-                                paramAnnotations.add(methodAnnotation);
-                            }
-
-                        }
-
-                        wrapperParams.add(new WrapperParameter(paramType, paramAnnotations, paramName));
-                    }
-                    // todo get REQUEST_WRAPPER_ANNOTATION to avoid creation of wrapper but create helper based on it
-                    MethodDescriptor requestCtor = createWrapper(true, operationName, namespace, resultName,
-                            mi.returnType().toString(), wrapperParams,
-                            classOutput, pkg, className, getters, setters);
-                    createWrapperHelper(classOutput, pkg, className, requestCtor, getters, setters);
-                    createWrapperFactory(classOutput, pkg, className, requestCtor);
-                    getters.clear();
-                    setters.clear();
-                    // todo get RESPONSE_WRAPPER_ANNOTATION to avoid creation of wrapper but create helper based on it
-
-                    MethodDescriptor responseCtor = createWrapper(false, operationName, namespace, resultName,
-                            mi.returnType().toString(), wrapperParams,
-                            classOutput, pkg, className, getters, setters);
-                    createWrapperHelper(classOutput, pkg, className + RESPONSE_CLASS_POSTFIX, responseCtor, getters, setters);
-                    createWrapperFactory(classOutput, pkg, className + RESPONSE_CLASS_POSTFIX, responseCtor);
-                    getters.clear();
-                    setters.clear();
-                    reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className));
-                    reflectiveClass
-                            .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + RESPONSE_CLASS_POSTFIX));
-                    reflectiveClass
-                            .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + WRAPPER_HELPER_POSTFIX));
-                    reflectiveClass.produce(new ReflectiveClassBuildItem(true, true,
-                            pkg + "." + className + RESPONSE_CLASS_POSTFIX + WRAPPER_HELPER_POSTFIX));
-                    reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, pkg + ".ObjectFactory"));
-                    reflectiveClass
-                            .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + WRAPPER_FACTORY_POSTFIX));
-                    reflectiveClass.produce(
-                            new ReflectiveClassBuildItem(true, true,
-                                    pkg + "." + className + RESPONSE_CLASS_POSTFIX + WRAPPER_FACTORY_POSTFIX));
-
+                    createException(classOutput, exceptionName, exceptionType.name());
                 }
-                //MethodDescriptor requestCtor = createWrapper("parameters", namespace,mi.typeParameters(), classOutput, pkg, pkg+"Parameters", getters, setters);
-                //createWrapperHelper(classOutput, pkg, className, requestCtor, getters, setters);
-                //getters.clear();
-                //setters.clear();
+                String className = StringUtils.capitalize(mi.name());
+                String operationName = mi.name();
+                AnnotationInstance webMethodAnnotation = mi.annotation(WEBMETHOD_ANNOTATION);
+                if (webMethodAnnotation != null) {
+                    AnnotationValue nameVal = webMethodAnnotation.value("operationName");
+                    if (nameVal != null) {
+                        operationName = nameVal.asString();
+                    }
+                }
+
+                AnnotationInstance webResultAnnotation = mi.annotation(WEBRESULT_ANNOTATION);
+                String resultName = "return";
+                if (webResultAnnotation != null) {
+                    AnnotationValue resultNameVal = webResultAnnotation.value("name");
+                    if (resultNameVal != null) {
+                        resultName = resultNameVal.asString();
+                    }
+                }
+                List<WrapperParameter> wrapperParams = new ArrayList<WrapperParameter>();
+                for (int i = 0; i < mi.parameters().size(); i++) {
+                    Type paramType = mi.parameters().get(i);
+                    String paramName = mi.parameterName(i);
+                    List<AnnotationInstance> paramAnnotations = new ArrayList<>();
+                    for (AnnotationInstance methodAnnotation : mi.annotations()) {
+                        if (methodAnnotation.target().kind() != AnnotationTarget.Kind.METHOD_PARAMETER)
+                            continue;
+                        MethodParameterInfo paramInfo = methodAnnotation.target().asMethodParameter();
+                        if (paramInfo != null && paramName.equals(paramInfo.name())) {
+                            paramAnnotations.add(methodAnnotation);
+                        }
+
+                    }
+
+                    wrapperParams.add(new WrapperParameter(paramType, paramAnnotations, paramName));
+                }
+                // todo get REQUEST_WRAPPER_ANNOTATION to avoid creation of wrapper but create helper based on it
+                MethodDescriptor requestCtor = createWrapper(true, operationName, namespace, resultName,
+                        mi.returnType().toString(), wrapperParams,
+                        classOutput, pkg, className, getters, setters);
+                createWrapperHelper(classOutput, pkg, className, requestCtor, getters, setters);
+                createWrapperFactory(classOutput, pkg, className, requestCtor);
+                getters.clear();
+                setters.clear();
+                // todo get RESPONSE_WRAPPER_ANNOTATION to avoid creation of wrapper but create helper based on it
+
+                MethodDescriptor responseCtor = createWrapper(false, operationName, namespace, resultName,
+                        mi.returnType().toString(), wrapperParams,
+                        classOutput, pkg, className, getters, setters);
+                createWrapperHelper(classOutput, pkg, className + RESPONSE_CLASS_POSTFIX, responseCtor, getters, setters);
+                createWrapperFactory(classOutput, pkg, className + RESPONSE_CLASS_POSTFIX, responseCtor);
+                getters.clear();
+                setters.clear();
+
+                reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className));
+                reflectiveClass
+                        .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + RESPONSE_CLASS_POSTFIX));
+                reflectiveClass
+                        .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + WRAPPER_HELPER_POSTFIX));
+                reflectiveClass.produce(new ReflectiveClassBuildItem(true, true,
+                        pkg + "." + className + RESPONSE_CLASS_POSTFIX + WRAPPER_HELPER_POSTFIX));
+                reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, pkg + ".ObjectFactory"));
+                reflectiveClass
+                        .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + WRAPPER_FACTORY_POSTFIX));
+                reflectiveClass.produce(
+                        new ReflectiveClassBuildItem(true, true,
+                                pkg + "." + className + RESPONSE_CLASS_POSTFIX + WRAPPER_FACTORY_POSTFIX));
+
             }
+            //MethodDescriptor requestCtor = createWrapper("parameters", namespace,mi.typeParameters(), classOutput, pkg, pkg+"Parameters", getters, setters);
+            //createWrapperHelper(classOutput, pkg, className, requestCtor, getters, setters);
+            //getters.clear();
+            //setters.clear();
         }
 
         feature.produce(new FeatureBuildItem(FEATURE_CXF));
@@ -871,10 +880,10 @@ class QuarkusCxfProcessor {
         }
         //TODO parse XmlSeeAlso annotation to add reflection on class too
     }
-    @BuildStep
+    /*@BuildStep
     BeanDefiningAnnotationBuildItem additionalBeanDefiningAnnotation() {
         return new BeanDefiningAnnotationBuildItem(WEBSERVICE_ANNOTATION);
-    }
+    }*/
     /**
      * Create Producer bean managing webservice client
      * <p>
