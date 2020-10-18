@@ -919,6 +919,9 @@ class QuarkusCxfProcessor {
         //TODO bad code it is set in loop but use outside...
         ClassOutput classOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
         createNamespaceWrapperInternal(classOutput);
+        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, "org.apache.cxf.jaxb.NamespaceMapperRI"));
+        unremovableBeans.produce(new UnremovableBeanBuildItem(
+                new UnremovableBeanBuildItem.BeanClassNameExclusion("org.apache.cxf.jaxb.NamespaceMapperRI")));
         Set<String> generatedClass = new HashSet<>();
         for (AnnotationInstance annotation : index.getAnnotations(WEBSERVICE_ANNOTATION)) {
             if (annotation.target().kind() != AnnotationTarget.Kind.CLASS) {
