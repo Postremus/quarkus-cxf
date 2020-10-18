@@ -37,9 +37,8 @@ final class Target_org_apache_cxf_wsdl_JAXBExtensionHelper {
     @Substitute()
     private static Class<?> createExtensionClass(Class<?> cls, QName qname, ClassLoader loader) {
         try {
-
-            Class<?> clz = Class.forName("io.quarkus.cxf." + cls.getSimpleName() + "Extensibility");
             LOG.info("extensibility class substitute: " + cls.getName());
+            Class<?> clz = Class.forName("io.quarkus.cxf." + cls.getSimpleName() + "Extensibility");
             return clz;
         } catch (ClassNotFoundException e) {
             LOG.warning("extensibility class to create: " + cls.getName());
@@ -58,8 +57,8 @@ final class Target_org_aapche_cxf_jaxb_JAXBContextInitializer {
     @Substitute()
     private Object createFactory(Class<?> cls, Constructor<?> contructor) {
         try {
-            Class<?> factoryClass = Class.forName("io.quarkus.cxf." + cls.getSimpleName() + "Factory");
             LOG.info("substitute  JAXBContextInitializer.createFactory class for : " + cls.getSimpleName());
+            Class<?> factoryClass = Class.forName("io.quarkus.cxf." + cls.getSimpleName() + "Factory");
             try {
                 return factoryClass.getConstructor().newInstance();
             } catch (Exception e) {

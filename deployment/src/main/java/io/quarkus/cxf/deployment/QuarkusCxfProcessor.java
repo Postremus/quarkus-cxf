@@ -23,6 +23,7 @@ import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import javax.xml.ws.soap.SOAPBinding;
 
+import io.quarkus.arc.deployment.BeanDefiningAnnotationBuildItem;
 import io.quarkus.gizmo.Gizmo;
 import io.quarkus.gizmo.GizmoClassVisitor;
 import io.quarkus.runtime.util.HashUtil;
@@ -1238,10 +1239,10 @@ class QuarkusCxfProcessor {
         }
         //TODO parse XmlSeeAlso annotation to add reflection on class too
     }
-    /*@BuildStep
+    @BuildStep
     BeanDefiningAnnotationBuildItem additionalBeanDefiningAnnotation() {
         return new BeanDefiningAnnotationBuildItem(WEBSERVICE_ANNOTATION);
-    }*/
+    }
     /**
      * Create Producer bean managing webservice client
      * <p>
@@ -1375,7 +1376,6 @@ class QuarkusCxfProcessor {
         proxies.produce(new NativeImageProxyDefinitionBuildItem("com.sun.xml.bind.v2.schemagen.xmlschema.TypeHost"));
         proxies.produce(new NativeImageProxyDefinitionBuildItem("com.sun.xml.bind.v2.schemagen.xmlschema.Union"));
         proxies.produce(new NativeImageProxyDefinitionBuildItem("com.sun.xml.bind.v2.schemagen.xmlschema.Wildcard"));
-
     }
 
     @BuildStep
@@ -1384,6 +1384,12 @@ class QuarkusCxfProcessor {
         //TODO load all handler from https://github.com/apache/cxf/tree/master/rt/frontend/jaxws/src/main/java/org/apache/cxf/jaxws/handler/types
         reflectiveItems.produce(new ReflectiveClassBuildItem(true, true,
                 "io.quarkus.cxf.QuarkusJAXBBeanInfo",
+                "io.quarkus.cxf.AddressTypeExtensibility",
+                "io.quarkus.cxf.CXFException",
+                "io.quarkus.cxf.HTTPClientPolicyExtensibility",
+                "io.quarkus.cxf.HTTPServerPolicyExtensibility",
+                "io.quarkus.cxf.XMLBindingMessageFormatExtensibility",
+                "io.quarkus.cxf.XMLFormatBindingExtensibility",
                 "org.apache.cxf.common.util.ReflectionInvokationHandler",
                 "com.sun.codemodel.internal.writer.FileCodeWriter",
                 "com.sun.codemodel.writer.FileCodeWriter",
@@ -1510,12 +1516,6 @@ class QuarkusCxfProcessor {
                 "com.sun.xml.internal.bind.marshaller.MinimumEscapeHandler",
                 "com.sun.xml.ws.runtime.config.ObjectFactory",
                 "ibm.wsdl.DefinitionImpl",
-                "io.quarkus.cxf.AddressTypeExtensibility",
-                "io.quarkus.cxf.CXFException",
-                "io.quarkus.cxf.HTTPClientPolicyExtensibility",
-                "io.quarkus.cxf.HTTPServerPolicyExtensibility",
-                "io.quarkus.cxf.XMLBindingMessageFormatExtensibility",
-                "io.quarkus.cxf.XMLFormatBindingExtensibility",
                 "io.swagger.jaxrs.DefaultParameterExtension",
                 "io.undertow.server.HttpServerExchange",
                 "io.undertow.UndertowOptions",
