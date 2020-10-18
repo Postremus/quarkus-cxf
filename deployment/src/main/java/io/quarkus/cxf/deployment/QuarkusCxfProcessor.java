@@ -573,7 +573,7 @@ class QuarkusCxfProcessor {
 
         forceJaxb.produce(new JaxbFileRootBuildItem("."));
         //TODO bad code it is set in loop but use outside...
-
+        Set<String> generatedClass = new HashSet<>();
         for (AnnotationInstance annotation : index.getAnnotations(WEBSERVICE_ANNOTATION)) {
             if (annotation.target().kind() != AnnotationTarget.Kind.CLASS) {
                 continue;
@@ -603,29 +603,31 @@ class QuarkusCxfProcessor {
             //if (getAnonymousWrapperTypes) pkg += "_an";
             //currently package-info is not supported by gizmo so done the whole generation
             String packageName = pkg + ".package-info";
-            String packagefileName = packageName.replace('.', '/');
             ClassOutput classOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
-            //https://github.com/apache/cxf/blob/master/rt/frontend/jaxws/src/main/java/org/apache/cxf/jaxws/WrapperClassGenerator.java#L234
-            ClassWriter file = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-            final GizmoClassVisitor cv = new GizmoClassVisitor(Gizmo.ASM_API_VERSION, file, classOutput.getSourceWriter(packagefileName));
-            cv.visit(Opcodes.V1_5, Opcodes.ACC_ABSTRACT + Opcodes.ACC_INTERFACE, packagefileName, null,
-                    "java/lang/Object", null);
+            if (!generatedClass.contains(packageName)) {
+                String packagefileName = packageName.replace('.', '/');
+                //https://github.com/apache/cxf/blob/master/rt/frontend/jaxws/src/main/java/org/apache/cxf/jaxws/WrapperClassGenerator.java#L234
+                ClassWriter file = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+                final GizmoClassVisitor cv = new GizmoClassVisitor(Gizmo.ASM_API_VERSION, file, classOutput.getSourceWriter(packagefileName));
+                cv.visit(Opcodes.V1_5, Opcodes.ACC_ABSTRACT + Opcodes.ACC_INTERFACE, packagefileName, null,
+                        "java/lang/Object", null);
 
-            AnnotationVisitor av = cv.visitAnnotation("Ljavax/xml/bind/annotation/XmlSchema;",true);
-            av.visit("namespace", namespace);
-            av.visitEnum("elementFormDefault", "Ljavax/xml/bind/annotation/XmlNsForm;", (namespaceVal != null) ? "QUALIFIED" : "UNQUALIFIED");
-            av.visitEnd();
+                AnnotationVisitor av = cv.visitAnnotation("Ljavax/xml/bind/annotation/XmlSchema;", true);
+                av.visit("namespace", namespace);
+                av.visitEnum("elementFormDefault", "Ljavax/xml/bind/annotation/XmlNsForm;", (namespaceVal != null) ? "QUALIFIED" : "UNQUALIFIED");
+                av.visitEnd();
 
-            // TODO find package annotation with yandex (AnnotationTarget.Kind.package do not exists...
-            // then forward value and type of XmlJavaTypeAdapter
-            //            PackageInfoCreator.addAnnotation(AnnotationInstance.create(DotName.createSimple(XmlJavaTypeAdapters.class.getName()),
-            //                    null, annotationValues));
-            //            PackageInfoCreator.addAnnotation(AnnotationInstance.create(DotName.createSimple(XmlJavaTypeAdapter.class.getName()),
-            //                    null, annotationValues));
+                // TODO find package annotation with yandex (AnnotationTarget.Kind.package do not exists...
+                // then forward value and type of XmlJavaTypeAdapter
+                //            PackageInfoCreator.addAnnotation(AnnotationInstance.create(DotName.createSimple(XmlJavaTypeAdapters.class.getName()),
+                //                    null, annotationValues));
+                //            PackageInfoCreator.addAnnotation(AnnotationInstance.create(DotName.createSimple(XmlJavaTypeAdapter.class.getName()),
+                //                    null, annotationValues));
 
-            cv.visitEnd();
-            classOutput.write(packagefileName, file.toByteArray());
-
+                cv.visitEnd();
+                classOutput.write(packagefileName, file.toByteArray());
+                generatedClass.add(packageName);
+            }
             //TODO get SOAPBINDING_ANNOTATION to get isRPC
             //@SOAPBinding(style=Style.RPC, use=Use.LITERAL, parameterStyle=ParameterStyle.BARE)
             List<MethodDescriptor> setters = new ArrayList<>();
@@ -637,7 +639,10 @@ class QuarkusCxfProcessor {
                         exceptionName = exceptionType.annotation(WEBFAULT_ANNOTATION).value("name").asString();
 
                     }
-                    createException(classOutput, exceptionName, exceptionType.name());
+                    if (!generatedClass.contains(exceptionName)) {
+                        createException(classOutput, exceptionName, exceptionType.name());
+                        generatedClass.add(exceptionName);
+                    }
                 }
                 String className = StringUtils.capitalize(mi.name());
                 String operationName = mi.name();
@@ -675,36 +680,40 @@ class QuarkusCxfProcessor {
                     wrapperParams.add(new WrapperParameter(paramType, paramAnnotations, paramName));
                 }
                 // todo get REQUEST_WRAPPER_ANNOTATION to avoid creation of wrapper but create helper based on it
-                MethodDescriptor requestCtor = createWrapper(true, operationName, namespace, resultName,
-                        mi.returnType().toString(), wrapperParams,
-                        classOutput, pkg, className, getters, setters);
-                createWrapperHelper(classOutput, pkg, className, requestCtor, getters, setters);
-                createWrapperFactory(classOutput, pkg, className, requestCtor);
-                getters.clear();
-                setters.clear();
-                // todo get RESPONSE_WRAPPER_ANNOTATION to avoid creation of wrapper but create helper based on it
 
-                MethodDescriptor responseCtor = createWrapper(false, operationName, namespace, resultName,
-                        mi.returnType().toString(), wrapperParams,
-                        classOutput, pkg, className, getters, setters);
-                createWrapperHelper(classOutput, pkg, className + RESPONSE_CLASS_POSTFIX, responseCtor, getters, setters);
-                createWrapperFactory(classOutput, pkg, className + RESPONSE_CLASS_POSTFIX, responseCtor);
-                getters.clear();
-                setters.clear();
+                if (!generatedClass.contains(pkg + className)) {
+                    MethodDescriptor requestCtor = createWrapper(true, operationName, namespace, resultName,
+                            mi.returnType().toString(), wrapperParams,
+                            classOutput, pkg, className, getters, setters);
+                    createWrapperHelper(classOutput, pkg, className, requestCtor, getters, setters);
+                    createWrapperFactory(classOutput, pkg, className, requestCtor);
+                    getters.clear();
+                    setters.clear();
+                    // todo get RESPONSE_WRAPPER_ANNOTATION to avoid creation of wrapper but create helper based on it
 
-                reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className));
-                reflectiveClass
-                        .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + RESPONSE_CLASS_POSTFIX));
-                reflectiveClass
-                        .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + WRAPPER_HELPER_POSTFIX));
-                reflectiveClass.produce(new ReflectiveClassBuildItem(true, true,
-                        pkg + "." + className + RESPONSE_CLASS_POSTFIX + WRAPPER_HELPER_POSTFIX));
-                reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, pkg + ".ObjectFactory"));
-                reflectiveClass
-                        .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + WRAPPER_FACTORY_POSTFIX));
-                reflectiveClass.produce(
-                        new ReflectiveClassBuildItem(true, true,
-                                pkg + "." + className + RESPONSE_CLASS_POSTFIX + WRAPPER_FACTORY_POSTFIX));
+                    MethodDescriptor responseCtor = createWrapper(false, operationName, namespace, resultName,
+                            mi.returnType().toString(), wrapperParams,
+                            classOutput, pkg, className, getters, setters);
+                    createWrapperHelper(classOutput, pkg, className + RESPONSE_CLASS_POSTFIX, responseCtor, getters, setters);
+                    createWrapperFactory(classOutput, pkg, className + RESPONSE_CLASS_POSTFIX, responseCtor);
+                    getters.clear();
+                    setters.clear();
+
+                    reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className));
+                    reflectiveClass
+                            .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + RESPONSE_CLASS_POSTFIX));
+                    reflectiveClass
+                            .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + WRAPPER_HELPER_POSTFIX));
+                    reflectiveClass.produce(new ReflectiveClassBuildItem(true, true,
+                            pkg + "." + className + RESPONSE_CLASS_POSTFIX + WRAPPER_HELPER_POSTFIX));
+                    reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, pkg + ".ObjectFactory"));
+                    reflectiveClass
+                            .produce(new ReflectiveClassBuildItem(true, true, pkg + "." + className + WRAPPER_FACTORY_POSTFIX));
+                    reflectiveClass.produce(
+                            new ReflectiveClassBuildItem(true, true,
+                                    pkg + "." + className + RESPONSE_CLASS_POSTFIX + WRAPPER_FACTORY_POSTFIX));
+                    generatedClass.add(pkg + className);
+                }
 
             }
             //MethodDescriptor requestCtor = createWrapper("parameters", namespace,mi.typeParameters(), classOutput, pkg, pkg+"Parameters", getters, setters);
