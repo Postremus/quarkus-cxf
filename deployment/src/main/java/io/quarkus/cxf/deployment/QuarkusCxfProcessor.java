@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -73,6 +74,9 @@ import io.quarkus.undertow.deployment.ServletInitParamBuildItem;
 import io.quarkus.vertx.http.deployment.RouteBuildItem;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 class QuarkusCxfProcessor {
@@ -493,6 +497,349 @@ class QuarkusCxfProcessor {
             }
         }
     }
+/*
+    private static void createEclipseNamespaceMapper(ClassOutput classOutput) {
+        
+        String className = "org.apache.cxf.jaxb.EclipseNamespaceMapper";
+        String slashedName = "org/apache/cxf/jaxb/EclipseNamespaceMapper";
+        String superName = "org/eclipse/persistence/internal/oxm/record/namespaces/MapNamespacePrefixMapper";
+        ClassWriter file = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+        final GizmoClassVisitor cw = new GizmoClassVisitor(Gizmo.ASM_API_VERSION, file, classOutput.getSourceWriter(slashedName));
+
+        FieldVisitor fv;
+        MethodVisitor mv;
+        cw.visit(Opcodes.V1_6,
+                Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL + Opcodes.ACC_SUPER,
+                slashedName, null,
+                superName, null);
+
+        cw.visitSource("EclipseNamespaceMapper.java", null);
+
+        fv = cw.visitField(Opcodes.ACC_PRIVATE, "nsctxt", "[Ljava/lang/String;", null, null);
+        fv.visitEnd();
+
+
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "(Ljava/util/Map;)V",
+                "(Ljava/util/Map<Ljava/lang/String;Ljava/lang/String;>;)V", null);
+        mv.visitCode();
+        Label l0 = new Label();
+        mv.visitLabel(l0);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitVarInsn(Opcodes.ALOAD, 1);
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                superName, "<init>", "(Ljava/util/Map;)V", false);
+        Label l1 = new Label();
+        mv.visitLabel(l1);
+        mv.visitInsn(Opcodes.RETURN);
+        Label l2 = new Label();
+        mv.visitLabel(l2);
+        mv.visitMaxs(2, 2);
+        mv.visitEnd();
+
+
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "setContextualNamespaceDecls", "([Ljava/lang/String;)V",
+                null, null);
+        mv.visitCode();
+        l0 = new Label();
+        mv.visitLabel(l0);
+        mv.visitLineNumber(47, l0);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitVarInsn(Opcodes.ALOAD, 1);
+        mv.visitFieldInsn(Opcodes.PUTFIELD, slashedName, "nsctxt", "[Ljava/lang/String;");
+        l1 = new Label();
+        mv.visitLabel(l1);
+        mv.visitLineNumber(48, l1);
+        mv.visitInsn(Opcodes.RETURN);
+        l2 = new Label();
+        mv.visitLabel(l2);
+        mv.visitLocalVariable("this", "L" + slashedName + ";", null, l0, l2, 0);
+        mv.visitLocalVariable("contextualNamespaceDecls", "[Ljava/lang/String;", null, l0, l2, 1);
+        mv.visitMaxs(2, 2);
+        mv.visitEnd();
+
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getContextualNamespaceDecls", "()[Ljava/lang/String;", null, null);
+        mv.visitCode();
+        l0 = new Label();
+        mv.visitLabel(l0);
+        mv.visitLineNumber(51, l0);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitFieldInsn(Opcodes.GETFIELD, slashedName, "nsctxt", "[Ljava/lang/String;");
+        mv.visitInsn(Opcodes.ARETURN);
+        l1 = new Label();
+
+        mv.visitLabel(l1);
+        mv.visitLocalVariable("this", "L" + slashedName + ";", null, l0, l1, 0);
+
+        mv.visitMaxs(1, 1);
+        mv.visitEnd();
+
+
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getPreDeclaredNamespaceUris", "()[Ljava/lang/String;", null, null);
+        mv.visitCode();
+        l0 = new Label();
+        mv.visitLabel(l0);
+        mv.visitLineNumber(1036, l0);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                superName,
+                "getPreDeclaredNamespaceUris", "()[Ljava/lang/String;", false);
+        mv.visitVarInsn(Opcodes.ASTORE, 1);
+        l1 = new Label();
+        mv.visitLabel(l1);
+        mv.visitLineNumber(1037, l1);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitFieldInsn(Opcodes.GETFIELD, slashedName, "nsctxt", "[Ljava/lang/String;");
+        l2 = new Label();
+        mv.visitJumpInsn(Opcodes.IFNONNULL, l2);
+        Label l3 = new Label();
+        mv.visitLabel(l3);
+        mv.visitLineNumber(1038, l3);
+        mv.visitVarInsn(Opcodes.ALOAD, 1);
+        mv.visitInsn(Opcodes.ARETURN);
+        mv.visitLabel(l2);
+        mv.visitLineNumber(1040, l2);
+        mv.visitFrame(Opcodes.F_APPEND, 1, new Object[] {"[Ljava/lang/String;"}, 0, null);
+        mv.visitTypeInsn(Opcodes.NEW, "java/util/ArrayList");
+        mv.visitInsn(Opcodes.DUP);
+        mv.visitVarInsn(Opcodes.ALOAD, 1);
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "asList",
+                "([Ljava/lang/Object;)Ljava/util/List;", false);
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/util/ArrayList", "<init>",
+                "(Ljava/util/Collection;)V", false);
+        mv.visitVarInsn(Opcodes.ASTORE, 2);
+        Label l4 = new Label();
+        mv.visitLabel(l4);
+        mv.visitLineNumber(1041, l4);
+        mv.visitInsn(Opcodes.ICONST_1);
+        mv.visitVarInsn(Opcodes.ISTORE, 3);
+        Label l5 = new Label();
+        mv.visitLabel(l5);
+        Label l6 = new Label();
+        mv.visitJumpInsn(Opcodes.GOTO, l6);
+        Label l7 = new Label();
+        mv.visitLabel(l7);
+        mv.visitLineNumber(1042, l7);
+        mv.visitFrame(Opcodes.F_APPEND, 2, new Object[] {"java/util/List", Opcodes.INTEGER}, 0, null);
+        mv.visitVarInsn(Opcodes.ALOAD, 2);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitFieldInsn(Opcodes.GETFIELD, slashedName, "nsctxt", "[Ljava/lang/String;");
+        mv.visitVarInsn(Opcodes.ILOAD, 3);
+        mv.visitInsn(Opcodes.AALOAD);
+        mv.visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/util/List", "remove", "(Ljava/lang/Object;)Z", true);
+        mv.visitInsn(Opcodes.POP);
+        Label l8 = new Label();
+        mv.visitLabel(l8);
+        mv.visitLineNumber(1041, l8);
+        mv.visitIincInsn(3, 2);
+        mv.visitLabel(l6);
+        mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+        mv.visitVarInsn(Opcodes.ILOAD, 3);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitFieldInsn(Opcodes.GETFIELD,
+                slashedName,
+                "nsctxt", "[Ljava/lang/String;");
+        mv.visitInsn(Opcodes.ARRAYLENGTH);
+        mv.visitJumpInsn(Opcodes.IF_ICMPLT, l7);
+        Label l9 = new Label();
+        mv.visitLabel(l9);
+        mv.visitLineNumber(1044, l9);
+        mv.visitVarInsn(Opcodes.ALOAD, 2);
+        mv.visitVarInsn(Opcodes.ALOAD, 2);
+        mv.visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/util/List", "size", "()I", true);
+        mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/String");
+        mv.visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/util/List",
+                "toArray", "([Ljava/lang/Object;)[Ljava/lang/Object;", true);
+        mv.visitTypeInsn(Opcodes.CHECKCAST, "[Ljava/lang/String;");
+        mv.visitInsn(Opcodes.ARETURN);
+        Label l10 = new Label();
+        mv.visitLabel(l10);
+        mv.visitLocalVariable("this", "L" + slashedName + ";",
+                null, l0, l10, 0);
+        mv.visitLocalVariable("sup", "[Ljava/lang/String;", null, l1, l10, 1);
+        mv.visitLocalVariable("s", "Ljava/util/List;", "Ljava/util/List<Ljava/lang/String;>;", l4, l10, 2);
+        mv.visitLocalVariable("x", "I", null, l5, l9, 3);
+        mv.visitMaxs(3, 4);
+        mv.visitEnd();
+
+        cw.visitEnd();
+
+        classOutput.write(className, file.toByteArray());
+    }
+*/
+    private static void createNamespaceWrapperInternal(ClassOutput classOutput) {
+        String className = "org.apache.cxf.jaxb.NamespaceMapperRI";
+        String superName = "com/sun/xml/bind/marshaller/NamespacePrefixMapper";
+        String postFixedName = "org/apache/cxf/jaxb/NamespaceMapperRI";
+        //TODO translate to gizmo
+        /*try (ClassCreator classCreator = ClassCreator.builder().classOutput(classOutput)
+                .superClass(com.sun.xml.bind.marshaller.NamespacePrefixMapper.class)
+                .className(className)
+                .setFinal(true)
+                .build()) {
+            FieldCreator nspref = classCreator.getFieldCreator("nspref", Map.class).setModifiers(Modifier.PRIVATE + Modifier.FINAL);
+            FieldCreator nsctxt = classCreator.getFieldCreator("nsctxt", String.class).setModifiers(Modifier.PRIVATE);
+            FieldCreator EMPTY_STRING = classCreator.getFieldCreator("EMPTY_STRING", String.class).setModifiers(Modifier.PRIVATE + Modifier.FINAL+ Modifier.STATIC);
+            try (MethodCreator staticCtor = classCreator.getMethodCreator(MethodDescriptor.ofConstructor(className)).setModifiers(Modifier.STATIC)) {
+                ResultHandle newArrayInstance = staticCtor.newArray(String.class, 0);
+                staticCtor.writeStaticField(EMPTY_STRING.getFieldDescriptor(), newArrayInstance);
+                staticCtor.returnValue(null);
+            }
+            try (MethodCreator ctor = classCreator.getMethodCreator(MethodDescriptor.ofConstructor(className, Map.class)).setModifiers(Modifier.PUBLIC)) {
+                ctor.
+            }
+
+        }*/
+        ClassWriter file = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+        final GizmoClassVisitor cw = new GizmoClassVisitor(Gizmo.ASM_API_VERSION, file, classOutput.getSourceWriter(postFixedName));
+
+
+        FieldVisitor fv;
+        MethodVisitor mv;
+
+        cw.visit(Opcodes.V1_6,
+                Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL + Opcodes.ACC_SUPER,
+                postFixedName, null,
+                superName, null);
+
+        cw.visitSource("NamespaceMapper.java", null);
+
+        fv = cw.visitField(Opcodes.ACC_PRIVATE + Opcodes.ACC_FINAL,
+                "nspref", "Ljava/util/Map;",
+                "Ljava/util/Map<Ljava/lang/String;Ljava/lang/String;>;", null);
+        fv.visitEnd();
+
+        fv = cw.visitField(Opcodes.ACC_PRIVATE, "nsctxt", "[Ljava/lang/String;", null, null);
+        fv.visitEnd();
+
+        fv = cw.visitField(Opcodes.ACC_PRIVATE + Opcodes.ACC_FINAL + Opcodes.ACC_STATIC,
+                "EMPTY_STRING", "[Ljava/lang/String;", null, null);
+        fv.visitEnd();
+
+        mv = cw.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
+        mv.visitCode();
+        Label l0 = new Label();
+        mv.visitLabel(l0);
+        mv.visitLineNumber(30, l0);
+        mv.visitInsn(Opcodes.ICONST_0);
+        mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/String");
+        mv.visitFieldInsn(Opcodes.PUTSTATIC, postFixedName, "EMPTY_STRING", "[Ljava/lang/String;");
+        mv.visitInsn(Opcodes.RETURN);
+        mv.visitMaxs(1, 0);
+        mv.visitEnd();
+
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>",
+                "(Ljava/util/Map;)V",
+                "(Ljava/util/Map<Ljava/lang/String;Ljava/lang/String;>;)V", null);
+        mv.visitCode();
+        l0 = new Label();
+        mv.visitLabel(l0);
+        mv.visitLineNumber(32, l0);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, superName, "<init>", "()V", false);
+        Label l1 = new Label();
+        mv.visitLabel(l1);
+        mv.visitLineNumber(29, l1);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitFieldInsn(Opcodes.GETSTATIC, postFixedName, "EMPTY_STRING", "[Ljava/lang/String;");
+        mv.visitFieldInsn(Opcodes.PUTFIELD, postFixedName, "nsctxt", "[Ljava/lang/String;");
+        Label l2 = new Label();
+        mv.visitLabel(l2);
+        mv.visitLineNumber(33, l2);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitVarInsn(Opcodes.ALOAD, 1);
+        mv.visitFieldInsn(Opcodes.PUTFIELD, postFixedName, "nspref", "Ljava/util/Map;");
+        Label l3 = new Label();
+        mv.visitLabel(l3);
+        mv.visitLineNumber(34, l3);
+        mv.visitInsn(Opcodes.RETURN);
+        Label l4 = new Label();
+        mv.visitLabel(l4);
+        mv.visitLocalVariable("this", "L" + postFixedName + ";", null, l0, l4, 0);
+        mv.visitLocalVariable("nspref",
+                "Ljava/util/Map;", "Ljava/util/Map<Ljava/lang/String;Ljava/lang/String;>;",
+                l0, l4, 1);
+        mv.visitMaxs(2, 2);
+        mv.visitEnd();
+
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getPreferredPrefix",
+                "(Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/String;",
+                null, null);
+        mv.visitCode();
+        l0 = new Label();
+        mv.visitLabel(l0);
+        mv.visitLineNumber(39, l0);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitFieldInsn(Opcodes.GETFIELD, postFixedName, "nspref", "Ljava/util/Map;");
+        mv.visitVarInsn(Opcodes.ALOAD, 1);
+        mv.visitMethodInsn(Opcodes.INVOKEINTERFACE, "java/util/Map",
+                "get", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
+        mv.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/String");
+        mv.visitVarInsn(Opcodes.ASTORE, 4);
+        l1 = new Label();
+        mv.visitLabel(l1);
+        mv.visitLineNumber(40, l1);
+        mv.visitVarInsn(Opcodes.ALOAD, 4);
+        l2 = new Label();
+        mv.visitJumpInsn(Opcodes.IFNULL, l2);
+        l3 = new Label();
+        mv.visitLabel(l3);
+        mv.visitLineNumber(41, l3);
+        mv.visitVarInsn(Opcodes.ALOAD, 4);
+        mv.visitInsn(Opcodes.ARETURN);
+        mv.visitLabel(l2);
+        mv.visitLineNumber(43, l2);
+        mv.visitFrame(Opcodes.F_APPEND, 1, new Object[] {"java/lang/String"}, 0, null);
+        mv.visitVarInsn(Opcodes.ALOAD, 2);
+        mv.visitInsn(Opcodes.ARETURN);
+        l4 = new Label();
+        mv.visitLabel(l4);
+        mv.visitLocalVariable("this", "L" + postFixedName + ";", null, l0, l4, 0);
+        mv.visitLocalVariable("namespaceUri", "Ljava/lang/String;", null, l0, l4, 1);
+        mv.visitLocalVariable("suggestion", "Ljava/lang/String;", null, l0, l4, 2);
+        mv.visitLocalVariable("requirePrefix", "Z", null, l0, l4, 3);
+        mv.visitLocalVariable("prefix", "Ljava/lang/String;", null, l1, l4, 4);
+        mv.visitMaxs(2, 5);
+        mv.visitEnd();
+
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "setContextualNamespaceDecls", "([Ljava/lang/String;)V", null, null);
+        mv.visitCode();
+        l0 = new Label();
+        mv.visitLabel(l0);
+        mv.visitLineNumber(47, l0);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitVarInsn(Opcodes.ALOAD, 1);
+        mv.visitFieldInsn(Opcodes.PUTFIELD, postFixedName, "nsctxt", "[Ljava/lang/String;");
+        l1 = new Label();
+        mv.visitLabel(l1);
+        mv.visitLineNumber(48, l1);
+        mv.visitInsn(Opcodes.RETURN);
+        l2 = new Label();
+        mv.visitLabel(l2);
+        mv.visitLocalVariable("this", "L" + postFixedName + ";", null, l0, l2, 0);
+        mv.visitLocalVariable("contextualNamespaceDecls", "[Ljava/lang/String;", null, l0, l2, 1);
+        mv.visitMaxs(2, 2);
+        mv.visitEnd();
+
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getContextualNamespaceDecls", "()[Ljava/lang/String;", null, null);
+        mv.visitCode();
+        l0 = new Label();
+        mv.visitLabel(l0);
+        mv.visitLineNumber(51, l0);
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitFieldInsn(Opcodes.GETFIELD, postFixedName, "nsctxt", "[Ljava/lang/String;");
+        mv.visitInsn(Opcodes.ARETURN);
+        l1 = new Label();
+
+        mv.visitLabel(l1);
+        mv.visitLocalVariable("this", "L" + postFixedName + ";", null, l0, l1, 0);
+
+        mv.visitMaxs(1, 1);
+        mv.visitEnd();
+
+        cw.visitEnd();
+
+        classOutput.write(className, file.toByteArray());
+    }
 
     @BuildStep
     void markBeansAsUnremovable(BuildProducer<UnremovableBeanBuildItem> unremovables) {
@@ -570,6 +917,8 @@ class QuarkusCxfProcessor {
 
         forceJaxb.produce(new JaxbFileRootBuildItem("."));
         //TODO bad code it is set in loop but use outside...
+        ClassOutput classOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
+        createNamespaceWrapperInternal(classOutput);
         Set<String> generatedClass = new HashSet<>();
         for (AnnotationInstance annotation : index.getAnnotations(WEBSERVICE_ANNOTATION)) {
             if (annotation.target().kind() != AnnotationTarget.Kind.CLASS) {
@@ -600,7 +949,7 @@ class QuarkusCxfProcessor {
             //if (getAnonymousWrapperTypes) pkg += "_an";
             //currently package-info is not supported by gizmo so done the whole generation
             String packageName = pkg + ".package-info";
-            ClassOutput classOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
+
             if (!generatedClass.contains(packageName)) {
                 String packagefileName = packageName.replace('.', '/');
                 //https://github.com/apache/cxf/blob/master/rt/frontend/jaxws/src/main/java/org/apache/cxf/jaxws/WrapperClassGenerator.java#L234
@@ -1032,6 +1381,11 @@ class QuarkusCxfProcessor {
         //TODO load all handler from https://github.com/apache/cxf/tree/master/rt/frontend/jaxws/src/main/java/org/apache/cxf/jaxws/handler/types
         reflectiveItems.produce(new ReflectiveClassBuildItem(true, true,
                 "io.quarkus.cxf.QuarkusJAXBBeanInfo",
+                "org.apache.cxf.common.util.ReflectionInvokationHandler",
+                "com.sun.codemodel.internal.writer.FileCodeWriter",
+                "com.sun.codemodel.writer.FileCodeWriter",
+                "org.apache.cxf.common.jaxb.NamespaceMapper",
+                "org.apache.cxf.jaxb.NamespaceMapper",
                 "com.sun.tools.internal.xjc.api.XJC",
                 "com.sun.tools.xjc.api.XJC",
                 "com.sun.xml.internal.bind.api.JAXBRIContext",
@@ -1139,8 +1493,6 @@ class QuarkusCxfProcessor {
                 "com.ibm.wsdl.ServiceImpl",
                 "com.ibm.wsdl.TypesImpl",
                 "com.oracle.xmlns.webservices.jaxws_databinding.ObjectFactory",
-                "com.sun.codemodel.internal.writer.FileCodeWriter",
-                "com.sun.codemodel.writer.FileCodeWriter",
                 "com.sun.org.apache.xerces.internal.utils.XMLSecurityManager",
                 "com.sun.org.apache.xerces.internal.utils.XMLSecurityPropertyManager",
                 "com.sun.xml.bind.api.TypeReference",
@@ -1224,7 +1576,6 @@ class QuarkusCxfProcessor {
                 "org.apache.cxf.bindings.xformat.XMLFormatBinding",
                 "org.apache.cxf.bus.CXFBusFactory",
                 "org.apache.cxf.bus.managers.BindingFactoryManagerImpl",
-                "org.apache.cxf.common.jaxb.NamespaceMapper",
                 "org.apache.cxf.interceptor.Fault",
                 "org.apache.cxf.jaxb.DatatypeFactory",
                 "org.apache.cxf.jaxb.JAXBDataBinding",

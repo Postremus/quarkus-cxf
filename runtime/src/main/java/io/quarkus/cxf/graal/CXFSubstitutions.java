@@ -5,7 +5,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
@@ -173,6 +175,41 @@ final class Target_org_apache_cxf_endpoint_dynamic_TypeClassInitializer$Exceptio
                         newClassName + " exception not implemented yet for GraalVM native images", ex);
             }
         }
+    }
+}
+
+@TargetClass(className = "org.apache.cxf.common.jaxb.JAXBUtils")
+final class Target_org_apache_cxf_common_jaxb_JAXBUtils {
+    @Alias
+    private static Logger LOG = null;
+    @Substitute
+    private static synchronized Object createNamespaceWrapper(Class<?> mcls, Map<String, String> map) {
+        Throwable t = null;
+        Class<?> clz = null;
+        try {
+            clz = Class.forName("org.apache.cxf.jaxb.NamespaceMapperRI");
+        } catch (ClassNotFoundException e) {
+            // ignore
+            t = e;
+        }
+        if (clz == null && (!mcls.getName().contains(".internal.") && mcls.getName().contains("com.sun"))) {
+            try {
+                clz = Class.forName("org.apache.cxf.common.jaxb.NamespaceMapper");
+            } catch (Throwable ex2) {
+                // ignore
+                t = ex2;
+            }
+        }
+        if (clz != null) {
+            try {
+                return clz.getConstructor(Map.class).newInstance(map);
+            } catch (Exception e) {
+                // ignore
+                t = e;
+            }
+        }
+        LOG.log(Level.INFO, "Could not create a NamespaceMapper compatible with Marshaller class " + mcls.getName(), t);
+        return null;
     }
 }
 
