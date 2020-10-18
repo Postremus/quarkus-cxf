@@ -1,14 +1,12 @@
 package io.quarkus.cxf.deployment;
 
 import java.lang.annotation.Annotation;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -24,7 +22,6 @@ import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import javax.xml.ws.soap.SOAPBinding;
 
-import io.quarkus.gizmo.DescriptorUtils;
 import io.quarkus.gizmo.Gizmo;
 import io.quarkus.gizmo.GizmoClassVisitor;
 import io.quarkus.runtime.util.HashUtil;
@@ -140,7 +137,7 @@ class QuarkusCxfProcessor {
             String resultType,
             List<WrapperParameter> params, ClassOutput classOutput, String pkg, String className,
             List<MethodDescriptor> getters, List<MethodDescriptor> setters) {
-        MethodDescriptor ctorDescriptor = null;
+        MethodDescriptor ctorDescriptor;
         String wrapperClassName = pkg + "." + className + (isRequest ? "" : RESPONSE_CLASS_POSTFIX);
         //WrapperClassGenerator
         try (ClassCreator classCreator = ClassCreator.builder().classOutput(classOutput)
@@ -400,12 +397,12 @@ class QuarkusCxfProcessor {
                         createWrapperObject.checkCast(listValRH, List.class);
                         BranchResult isNullBranch = createWrapperObject.ifNull(getterListRH);
                         try (BytecodeCreator getterValIsNull = isNullBranch.trueBranch()) {
-                            createWrapperObject.checkCast(listValRH, getter.getReturnType());
-                            createWrapperObject.invokeVirtualMethod(setter, listValRH);
+                            getterValIsNull.checkCast(listValRH, getter.getReturnType());
+                            getterValIsNull.invokeVirtualMethod(setter, listValRH);
 
                         }
                         try (BytecodeCreator getterValIsNotNull = isNullBranch.falseBranch()) {
-                            createWrapperObject.invokeInterfaceMethod(LIST_ADDALL, getterListRH, listValRH);
+                            getterValIsNotNull.invokeInterfaceMethod(LIST_ADDALL, getterListRH, listValRH);
                         }
                     } else {
                         boolean isjaxbElement = false;
