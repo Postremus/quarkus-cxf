@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
 
+import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.ReflectionInvokationHandler;
 import org.apache.cxf.common.util.ReflectionUtil;
 import org.apache.cxf.common.util.StringUtils;
@@ -58,7 +59,7 @@ final class Target_org_aapche_cxf_jaxb_JAXBContextInitializer {
     private Object createFactory(Class<?> cls, Constructor<?> contructor) {
         try {
             Class<?> factoryClass = Class.forName("io.quarkus.cxf." + cls.getSimpleName() + "Factory");
-            LOG.info("load factory class for : " + cls.getSimpleName());
+            LOG.info("substitute  JAXBContextInitializer.createFactory class for : " + cls.getSimpleName());
             try {
                 return factoryClass.getConstructor().newInstance();
             } catch (Exception e) {
@@ -160,6 +161,8 @@ final class Target_org_apache_cxf_endpoint_dynamic_TypeClassInitializer$Exceptio
 
     @Substitute
     public Class<?> createExceptionClass(Class<?> bean) throws ClassNotFoundException {
+        Logger LOG = LogUtils.getL7dLogger(org.apache.cxf.endpoint.dynamic.TypeClassInitializer.class);
+        LOG.info("Substitute TypeClassInitializer$ExceptionCreator.createExceptionClass");
         //TODO not sure if I use CXFException or generated one. I have both system in place. but I use CXFEx currently.
         String newClassName = CXFException.class.getSimpleName();
 
@@ -184,6 +187,7 @@ final class Target_org_apache_cxf_common_jaxb_JAXBUtils {
     private static Logger LOG = null;
     @Substitute
     private static synchronized Object createNamespaceWrapper(Class<?> mcls, Map<String, String> map) {
+        LOG.info("Substitute JAXBUtils.createNamespaceWrapper");
         Throwable t = null;
         Class<?> clz = null;
         try {
