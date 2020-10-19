@@ -38,8 +38,6 @@ import org.apache.ws.commons.schema.XmlSchema;
 @TargetClass(className = "org.apache.cxf.databinding.AbstractDataBinding")
 final class Target_org_apache_cxf_databinding_AbstractDataBinding {
 
-    private static Logger LOG = LogUtils.getL7dLogger(org.apache.cxf.endpoint.dynamic.TypeClassInitializer.class);
-
     @Alias
     public XmlSchema addSchemaDocument(ServiceInfo serviceInfo,
                                        SchemaCollection col,
@@ -59,6 +57,7 @@ final class Target_org_apache_cxf_databinding_AbstractDataBinding {
        transformer.transform(domSource, result);
        return writer.toString();
 */
+        Logger LOG = LogUtils.getL7dLogger(org.apache.cxf.endpoint.dynamic.TypeClassInitializer.class);
         LOG.info("DOCUMENT namespace :"+ d.getDocumentElement().getNamespaceURI());
         return addSchemaDocument(serviceInfo, col, d, systemId, null);
     }
