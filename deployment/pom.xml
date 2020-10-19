@@ -71,7 +71,7 @@
             <groupId>jakarta.jws</groupId>
             <artifactId>jakarta.jws-api</artifactId>
             <scope>test</scope>
-        </dependency>        
+        </dependency>
     </dependencies>
 
     <build>
