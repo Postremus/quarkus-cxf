@@ -5,6 +5,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -12,22 +13,56 @@ import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
 
+import org.w3c.dom.Document;
+
 import org.apache.cxf.common.logging.LogUtils;
 import org.apache.cxf.common.util.ReflectionInvokationHandler;
 import org.apache.cxf.common.util.ReflectionUtil;
 import org.apache.cxf.common.util.StringUtils;
+import org.apache.cxf.common.xmlschema.SchemaCollection;
 import org.apache.cxf.databinding.WrapperHelper;
 import org.apache.cxf.jaxws.support.JaxWsServiceFactoryBean;
 import org.apache.cxf.service.model.InterfaceInfo;
 import org.apache.cxf.service.model.MessageInfo;
 import org.apache.cxf.service.model.MessagePartInfo;
 import org.apache.cxf.service.model.OperationInfo;
+import org.apache.cxf.service.model.ServiceInfo;
 
 import com.oracle.svm.core.annotate.Alias;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
 
 import io.quarkus.cxf.CXFException;
+import org.apache.ws.commons.schema.XmlSchema;
+
+@TargetClass(className = "org.apache.cxf.databinding.AbstractDataBinding")
+final class Target_org_apache_cxf_databinding_AbstractDataBinding {
+
+    private static Logger LOG = LogUtils.getL7dLogger(org.apache.cxf.endpoint.dynamic.TypeClassInitializer.class);
+
+    @Alias
+    public XmlSchema addSchemaDocument(ServiceInfo serviceInfo,
+                                       SchemaCollection col,
+                                       Document d,
+                                       String systemId,
+                                       Collection<String> ids) {
+        return null;
+    }
+    @Substitute()
+    public XmlSchema addSchemaDocument(ServiceInfo serviceInfo, SchemaCollection col, Document d,
+                                       String systemId) {
+        /*DOMSource domSource = new DOMSource(doc);
+       StringWriter writer = new StringWriter();
+       StreamResult result = new StreamResult(writer);
+       TransformerFactory tf = TransformerFactory.newInstance();
+       Transformer transformer = tf.newTransformer();
+       transformer.transform(domSource, result);
+       return writer.toString();
+*/
+        LOG.info("DOCUMENT namespace :"+ d.getDocumentElement().getNamespaceURI());
+        return addSchemaDocument(serviceInfo, col, d, systemId, null);
+    }
+}
 
 @TargetClass(className = "org.apache.cxf.wsdl.JAXBExtensionHelper")
 final class Target_org_apache_cxf_wsdl_JAXBExtensionHelper {
