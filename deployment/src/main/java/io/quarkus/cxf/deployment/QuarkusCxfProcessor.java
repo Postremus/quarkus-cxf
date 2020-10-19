@@ -1335,7 +1335,6 @@ class QuarkusCxfProcessor {
         proxies.produce(new NativeImageProxyDefinitionBuildItem("org.apache.cxf.binding.soap.wsdl.extensions.SoapFault"));
         proxies.produce(new NativeImageProxyDefinitionBuildItem("org.apache.cxf.binding.soap.wsdl.extensions.SoapOperation"));
         proxies.produce(new NativeImageProxyDefinitionBuildItem("com.sun.xml.bind.marshaller.CharacterEscapeHandler"));
-        proxies.produce(new NativeImageProxyDefinitionBuildItem("com.sun.xml.internal.bind.marshaller.CharacterEscapeHandler"));
         proxies.produce(new NativeImageProxyDefinitionBuildItem("com.sun.xml.bind.v2.schemagen.xmlschema.Annotated"));
         proxies.produce(new NativeImageProxyDefinitionBuildItem("com.sun.xml.bind.v2.schemagen.xmlschema.Annotation"));
         proxies.produce(new NativeImageProxyDefinitionBuildItem("com.sun.xml.bind.v2.schemagen.xmlschema.Any"));
@@ -1445,7 +1444,6 @@ class QuarkusCxfProcessor {
                 "com.sun.xml.internal.bind.XmlAccessorFactory",
                 "com.sun.xml.internal.bind.treatEverythingNillable",
                 "com.sun.xml.bind.marshaller.CharacterEscapeHandler",
-                "com.sun.xml.internal.bind.marshaller.CharacterEscapeHandler",
                 "com.sun.org.apache.xerces.internal.dom.ElementNSImpl",
                 "sun.security.ssl.SSLLogger",
                 "com.sun.xml.internal.bind.retainReferenceToInfo"));
