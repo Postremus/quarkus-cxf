@@ -964,7 +964,7 @@ class QuarkusCxfProcessor {
 
                 AnnotationVisitor av = cv.visitAnnotation("Ljavax/xml/bind/annotation/XmlSchema;", true);
                 av.visit("namespace", namespace);
-                av.visitEnum("elementFormDefault", "Ljavax/xml/bind/annotation/XmlNsForm;", (namespaceVal != null) ? "QUALIFIED" : "UNQUALIFIED");
+                av.visitEnum("elementFormDefault", "Ljavax/xml/bind/annotation/XmlNsForm;", "QUALIFIED");
                 av.visitEnd();
 
                 // TODO find package annotation with yandex (AnnotationTarget.Kind.package do not exists...
@@ -977,6 +977,8 @@ class QuarkusCxfProcessor {
                 cv.visitEnd();
                 classOutput.write(packagefileName, file.toByteArray());
                 generatedClass.add(packageName);
+                reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, packageName));
+
             }
             //TODO get SOAPBINDING_ANNOTATION to get isRPC
             //@SOAPBinding(style=Style.RPC, use=Use.LITERAL, parameterStyle=ParameterStyle.BARE)
