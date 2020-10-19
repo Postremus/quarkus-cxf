@@ -1384,6 +1384,7 @@ class QuarkusCxfProcessor {
         //TODO load all handler from https://github.com/apache/cxf/tree/master/rt/frontend/jaxws/src/main/java/org/apache/cxf/jaxws/handler/types
         reflectiveItems.produce(new ReflectiveClassBuildItem(true, true,
                 "io.quarkus.cxf.QuarkusJAXBBeanInfo",
+                "org.apache.cxf.common.logging.Slf4jLogger",
                 "io.quarkus.cxf.AddressTypeExtensibility",
                 "io.quarkus.cxf.CXFException",
                 "io.quarkus.cxf.HTTPClientPolicyExtensibility",
