@@ -68,6 +68,8 @@ final class Target_org_apache_cxf_databinding_AbstractDataBinding {
 
         Logger LOG = LogUtils.getL7dLogger(org.apache.cxf.endpoint.dynamic.TypeClassInitializer.class);
         LOG.info("DOCUMENT :"+ writer.toString());
+        LOG.info("DOCUMENT element :"+ d.getDocumentElement().toString());
+        LOG.info("DOCUMENT namespace :"+ d.getDocumentElement().getNamespaceURI());
         return addSchemaDocument(serviceInfo, col, d, systemId, null);
     }
 }
