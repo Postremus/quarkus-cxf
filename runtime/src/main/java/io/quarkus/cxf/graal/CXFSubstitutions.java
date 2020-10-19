@@ -1,5 +1,6 @@
 package io.quarkus.cxf.graal;
 
+import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -12,6 +13,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 
@@ -49,16 +55,19 @@ final class Target_org_apache_cxf_databinding_AbstractDataBinding {
     @Substitute()
     public XmlSchema addSchemaDocument(ServiceInfo serviceInfo, SchemaCollection col, Document d,
                                        String systemId) {
-        /*DOMSource domSource = new DOMSource(doc);
-       StringWriter writer = new StringWriter();
-       StreamResult result = new StreamResult(writer);
-       TransformerFactory tf = TransformerFactory.newInstance();
-       Transformer transformer = tf.newTransformer();
-       transformer.transform(domSource, result);
-       return writer.toString();
-*/
+        DOMSource domSource = new DOMSource(d);
+        StringWriter writer = new StringWriter();
+        StreamResult result = new StreamResult(writer);
+        TransformerFactory tf = TransformerFactory.newInstance();
+        Transformer transformer = null;
+        try {
+            transformer = tf.newTransformer();
+            transformer.transform(domSource, result);
+        } catch (Exception e) {
+        }
+
         Logger LOG = LogUtils.getL7dLogger(org.apache.cxf.endpoint.dynamic.TypeClassInitializer.class);
-        LOG.info("DOCUMENT namespace :"+ d.getDocumentElement().getNamespaceURI());
+        LOG.info("DOCUMENT :"+ writer.toString());
         return addSchemaDocument(serviceInfo, col, d, systemId, null);
     }
 }
